@@ -1,6 +1,7 @@
 package com.example.society.config;
 
 import com.example.society.enums.SexEnum;
+import com.example.society.models.Demographic;
 import com.example.society.models.Human;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -10,8 +11,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Configuration
@@ -23,6 +26,7 @@ public class InitialSetup {
     private static final int MAX_AGE = 70;
 
     private final Set<Human> humansDB;
+    private final Map<String, Demographic> demographicStatisticPerCountryDB;
     private final Random random;
     private final List<String> boyNamesDB;
     private final List<String> girlNamesDB;
@@ -34,10 +38,37 @@ public class InitialSetup {
                 .forEach(i -> humansDB.add(generateHuman()));
     }
 
-    @Scheduled(fixedRate = 60*1000)
+    @Scheduled(fixedRate = 10*1000)
     public void populationLifecycle() {
         makeHumanityOlderBy1Year();
         produceChildren();
+        calculateDemographicStatistic();
+    }
+
+    private void calculateDemographicStatistic() {
+        demographicStatisticPerCountryDB.clear();
+        Map<String, Set<Human>> humansGroupedByCountry = humansDB.stream()
+                .collect(Collectors.groupingBy(Human::getCountry, Collectors.toSet()));
+
+        humansGroupedByCountry.entrySet().forEach(entry -> {
+            Set<Human> humans = entry.getValue();
+            long totalPopulation = humans.size();
+
+            long numberOfMan = humans.stream().filter(human -> human.getSex() == SexEnum.MAN).count();
+            long manPercentage = (long) ((double) numberOfMan/totalPopulation * 100);
+            long womanPercentage = 100 - manPercentage;
+
+            long numberOfChildren = humans.stream().filter(human -> human.getAge() < 18).count();
+            long numberOfAdult = totalPopulation - numberOfChildren;
+
+            demographicStatisticPerCountryDB.put(entry.getKey(), Demographic.builder()
+                    .totalPopulation(totalPopulation)
+                    .manPercentage(manPercentage)
+                    .womanPercentage(womanPercentage)
+                    .numberOfChildren(numberOfChildren)
+                    .numberOfAdult(numberOfAdult)
+                    .build());
+        });
     }
 
     private void makeHumanityOlderBy1Year() {
