@@ -21,9 +21,12 @@ import java.util.stream.IntStream;
 @EnableScheduling
 @RequiredArgsConstructor
 public class InitialSetup {
-    private final int INITIAL_POPULATION_NUMBER = 20000;
-    private final int CHILDREN_BORN_EVERY_YEAR = 500;
+    private final int INITIAL_POPULATION_NUMBER = 100000;
+    private final int CHILDREN_BORN_EVERY_YEAR = 2000;
     private static final int MAX_AGE = 70;
+    private static final int MAX_EDUCATION_LEVEL = 50;
+    private static final int MAX_POWER = 100;
+    private static final int MAX_HAPPINESS = 10;
 
     private final Set<Human> humansDB;
     private final Map<String, Demographic> demographicStatisticPerCountryDB;
@@ -92,21 +95,31 @@ public class InitialSetup {
 
     public Human generateHuman() {
         SexEnum sex = SexEnum.getAny();
+        int age = generateAge();
         return Human.builder()
                 .name(sex == SexEnum.MAN ? generateBoyName() : generateGirlName())
                 .sex(sex)
-                .age(generateAge())
+                .age(age)
                 .country(generateCountry())
+                .morality(generateMorality())
+                .education(generateEducation())
+                .power(age < 18 ? 0 : 1)
+                .happiness(generateHappiness())
                 .build();
     }
 
     public Human generateChild() {
         SexEnum sex = SexEnum.getAny();
+        int age = generateAge();
         return Human.builder()
                 .name(sex == SexEnum.MAN ? generateBoyName() : generateGirlName())
                 .sex(sex)
-                .age(0)
+                .age(age)
                 .country(generateCountry())
+                .morality(generateMorality())
+                .education(generateEducation())
+                .power(0)
+                .happiness(generateHappiness())
                 .build();
     }
 
@@ -122,7 +135,16 @@ public class InitialSetup {
         return countriesDB.get(random.nextInt(countriesDB.size()));
     }
 
+    // Morality in range (-10, 10)
+    private int generateMorality() { return random.nextInt(20) - 10; }
+
+    private int generateEducation() { return random.nextInt(MAX_EDUCATION_LEVEL) + 1; }
+
     private int generateAge() {
         return random.nextInt(MAX_AGE);
+    }
+
+    private int generateHappiness() {
+        return random.nextInt(MAX_HAPPINESS) + 1;
     }
 }

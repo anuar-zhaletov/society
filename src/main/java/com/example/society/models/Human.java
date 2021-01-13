@@ -15,4 +15,8 @@ public class Human {
     private int age;
     private SexEnum sex;
     private String country;
+    private int morality;
+    private int education;
+    private int power;
+    private int happiness;
 }
