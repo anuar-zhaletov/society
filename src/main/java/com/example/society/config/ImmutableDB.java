@@ -21,6 +21,9 @@ public class ImmutableDB {
     @Value("classpath:girlnames.txt")
     private Resource girlnamesResource;
 
+    @Value("classpath:countries.txt")
+    private Resource countriesResource;
+
     @Bean
     public List<String> boyNamesDB() throws IOException {
         Path path = Paths.get(boynamesResource.getURI());
@@ -30,6 +33,12 @@ public class ImmutableDB {
     @Bean
     public List<String> girlNamesDB() throws IOException {
         Path path = Paths.get(girlnamesResource.getURI());
+        return Files.lines(path).collect(Collectors.toList());
+    }
+
+    @Bean
+    public List<String> countriesDB() throws IOException {
+        Path path = Paths.get(countriesResource.getURI());
         return Files.lines(path).collect(Collectors.toList());
     }
 

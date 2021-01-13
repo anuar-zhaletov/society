@@ -1,24 +1,26 @@
 package com.example.society.controllers;
 
+import com.example.society.models.Human;
 import com.example.society.services.HumanGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Set;
+
 @RestController
-@RequestMapping("human")
 @RequiredArgsConstructor
 public class HumanController {
     private final HumanGeneratorService humanGeneratorService;
+    private final Set<Human> humansDB;
 
-    @GetMapping("boyname")
-    public String getBoyName() {
-        return humanGeneratorService.getBoyName();
+    @GetMapping("generatePopulation")
+    public void generatePopulation() {
+        humanGeneratorService.generatePopulation();
     }
 
-    @GetMapping("girlname")
-    public String getGirlName() {
-        return humanGeneratorService.getGirlName();
+    @GetMapping("getPopulation")
+    public Set<Human> getPopulation() {
+        return humansDB;
     }
 }

@@ -10,4 +10,5 @@ public class Human {
     String name;
     int age;
     SexEnum sex;
+    String country;
 }
