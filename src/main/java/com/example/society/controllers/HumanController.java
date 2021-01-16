@@ -1,6 +1,8 @@
 package com.example.society.controllers;
 
 import com.example.society.enums.EducationSystem;
+import com.example.society.enums.MoralitySystem;
+import com.example.society.enums.PoliticalSystem;
 import com.example.society.models.Demographic;
 import com.example.society.repository.PopulationRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,16 @@ public class HumanController {
         populationRepository.changeEducationSystem(country, educationSystem);
     }
 
+    @GetMapping("changeMoralitySystem/{country}/{moralitySystem}")
+    public void changeMoralitySystem(@PathVariable String country, @PathVariable MoralitySystem moralitySystem) {
+        populationRepository.changeMoralitySystem(country, moralitySystem);
+    }
+
+    @GetMapping("changePoliticalSystem/{country}/{politicalSystem}")
+    public void changePoliticalSystem(@PathVariable String country, @PathVariable PoliticalSystem politicalSystem) {
+        populationRepository.changePoliticalSystem(country, politicalSystem);
+    }
+
     @GetMapping("countries")
     public List<String> getCountries() {
         return countriesDB;
@@ -35,5 +47,15 @@ public class HumanController {
     @GetMapping("educationSystems")
     public EducationSystem[] getEducationSystems() {
         return EducationSystem.values();
+    }
+
+    @GetMapping("moralitySystems")
+    public MoralitySystem[] getMoralitySystems() {
+        return MoralitySystem.values();
+    }
+
+    @GetMapping("politicalSystems")
+    public PoliticalSystem[] getPoliticalSystems() {
+        return PoliticalSystem.values();
     }
 }

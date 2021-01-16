@@ -1,6 +1,7 @@
 package com.example.society.repository;
 
 import com.example.society.enums.EducationSystem;
+import com.example.society.enums.MoralitySystem;
 import com.example.society.enums.PoliticalSystem;
 import com.example.society.enums.Sex;
 import com.example.society.models.Demographic;
@@ -24,12 +25,13 @@ import java.util.stream.LongStream;
 @RequiredArgsConstructor
 public class PopulationRepository {
     private static final int ADULT_AGE = 18;
+    private static final int DEPUTY_NUMBER = 50;
+    private static final int DICTATOR_NUMBER = 1;
     private static AtomicLong HUMAN_ID = new AtomicLong(0);
     private static final int MAX_AGE = 70;
     private final int INITIAL_POPULATION_NUMBER = 100000;
     private static final int MAX_POWER = 100;
     private static final int MAX_HAPPINESS = 1000;
-    private static final int MAX_MORALITY = 10;
 
     private final Random random;
     private final List<String> boyNamesDB;
@@ -39,16 +41,14 @@ public class PopulationRepository {
     private final Map<String, Population> populationDB;
 
     public synchronized void produceInitialHumanity() {
-        IntStream.range(1, INITIAL_POPULATION_NUMBER + 1).forEach(i -> {
-            putHumanIntoPopulationDB(generateCountry(), generateInitialHuman());
-        });
+        IntStream.range(1, INITIAL_POPULATION_NUMBER + 1).forEach(i -> putHumanIntoPopulationDB(generateCountry(), generateInitialHuman()));
     }
 
     public synchronized void produceChildren() {
         populationDB.forEach((country, population) -> {
-            long numberOfChildrenBorn = population.getHumanity().size() / 35;
+            long numberOfChildrenBorn = population.getHumanity().size() / 25;
             LongStream.range(1, numberOfChildrenBorn + 1).forEach(i -> {
-                putHumanIntoPopulationDB(country, generateChild(population.getEducationSystem()));
+                putHumanIntoPopulationDB(country, generateChild(population.getEducationSystem(), population.getMoralitySystem()));
                 population.setBorn(population.getBorn() + 1);
             });
         });
@@ -73,11 +73,62 @@ public class PopulationRepository {
 
     public synchronized void distributePower() {
         populationDB.forEach((country, population) -> {
-            population.getHumanity().forEach(human -> {
-                if (human.getAge() >= ADULT_AGE) {
-                    human.setPower(1);
+            long numberOfAdult = population.getHumanity().stream().filter(human -> human.getAge() >= ADULT_AGE).count();
+
+            // ANARCHY
+            if (population.getPoliticalSystem() == PoliticalSystem.ANARCHY) {
+                long power = (long) ((double) numberOfAdult + 2500) / numberOfAdult;
+
+                for (Human human : population.getHumanity()) {
+                    if (human.getAge() >= ADULT_AGE) {
+                        human.setPower(power);
+                    }
                 }
-            });
+            }
+
+            // DEMOCRACY
+            if (population.getPoliticalSystem() == PoliticalSystem.DEMOCRACY) {
+                for (Human human : population.getHumanity()) {
+                    if (human.getAge() >= ADULT_AGE) {
+                        human.setPower(1);
+                    }
+                }
+
+                int deputyNumber = DEPUTY_NUMBER;
+
+                while (deputyNumber > 0) {
+                    List<Human> humanity = population.getHumanity();
+                    Human randomHuman = humanity.get(random.nextInt(humanity.size()));
+
+                    if (randomHuman.getAge() >= ADULT_AGE) {
+                        randomHuman.setPower(51);
+                        deputyNumber--;
+                    }
+                }
+            }
+
+            // DICTATORSHIP
+            if (population.getPoliticalSystem() == PoliticalSystem.DICTATORSHIP) {
+                for (Human human : population.getHumanity()) {
+                    if (human.getAge() >= ADULT_AGE) {
+                        human.setPower(1);
+                    }
+                }
+
+                int dictatorNumber = DICTATOR_NUMBER;
+
+                while (dictatorNumber > 0) {
+                    List<Human> humanity = population.getHumanity();
+                    Human randomHuman = humanity.get(random.nextInt(humanity.size()));
+
+                    if (randomHuman.getAge() >= ADULT_AGE) {
+                        randomHuman.setPower(2501);
+                        dictatorNumber--;
+                    }
+                }
+            }
+
+            // if blockchain power should be spread based on education * morality
         });
     }
 
@@ -96,7 +147,7 @@ public class PopulationRepository {
                     long happinessPercentage = (long) ((double) humanity.stream().map(Human::getHappiness).reduce(0L, Long::sum) / (totalPopulation * MAX_HAPPINESS) * 100);
                     PoliticalSystem politicalSystem = e.getValue().getPoliticalSystem();
                     long educationLevelPercentage = (long) ((double) humanity.stream().map(Human::getEducation).reduce(0L, Long::sum) / (totalPopulation * EducationSystem.LEVEL_5.getMaxLevel()) * 100);
-                    long moralityPercentage = (long) ((double) humanity.stream().map(Human::getMorality).reduce(0L, Long::sum) / (totalPopulation * MAX_MORALITY) * 100);
+                    long moralityPercentage = (long) ((double) humanity.stream().map(Human::getMorality).reduce(0L, Long::sum) / (totalPopulation * MoralitySystem.LEVEL_5.getMaxLevel()) * 100);
                     long totalPower = humanity.stream().map(this::getTotalPower).reduce(0L, Long::sum);
 
                     return Demographic.builder()
@@ -112,6 +163,7 @@ public class PopulationRepository {
                             .killed(e.getValue().getKilled())
                             .educationLevelPercentage(educationLevelPercentage)
                             .educationSystem(e.getValue().getEducationSystem())
+                            .moralitySystem(e.getValue().getMoralitySystem())
                             .moralityPercentage(moralityPercentage)
                             .totalPower(totalPower)
                             .build();
@@ -126,8 +178,9 @@ public class PopulationRepository {
             humanity.add(human);
             populationDB.put(country, Population.builder()
                     .humanity(humanity)
-                    .politicalSystem(PoliticalSystem.ANARCHY)
-                    .educationSystem(EducationSystem.LEVEL_1)
+                    .politicalSystem(PoliticalSystem.getAny())
+                    .educationSystem(EducationSystem.getAny())
+                    .moralitySystem(MoralitySystem.getAny())
                     .born(0L)
                     .died(0L)
                     .killed(0L)
@@ -182,6 +235,23 @@ public class PopulationRepository {
         }
     }
 
+    public synchronized void changeMoralitySystem(String country, MoralitySystem moralitySystem) {
+        Population population = populationDB.get(country);
+
+        if (population != null) {
+            population.setMoralitySystem(moralitySystem);
+            population.getHumanity().forEach(human -> human.setMorality(generateMorality(moralitySystem)));
+        }
+    }
+
+    public synchronized void changePoliticalSystem(String country, PoliticalSystem politicalSystem) {
+        Population population = populationDB.get(country);
+
+        if (population != null) {
+            population.setPoliticalSystem(politicalSystem);
+        }
+    }
+
     private long getTotalPower(Human human) {
         return human.getMorality() * human.getEducation() * human.getPower();
     }
@@ -194,14 +264,14 @@ public class PopulationRepository {
                 .name(sex == Sex.MAN ? generateBoyName() : generateGirlName())
                 .sex(sex)
                 .age(age)
-                .morality(generateMorality())
+                .morality(generateMorality(MoralitySystem.LEVEL_1))
                 .education(generateEducation(EducationSystem.LEVEL_1))
-                .power(age < ADULT_AGE ? 0 : 1)
                 .happiness(generateHappiness())
+                .power(1)
                 .build();
     }
 
-    private Human generateChild(EducationSystem educationSystem) {
+    private Human generateChild(EducationSystem educationSystem, MoralitySystem moralitySystem) {
         Sex sex = Sex.getAny();
         int age = generateAge();
         return Human.builder()
@@ -209,10 +279,10 @@ public class PopulationRepository {
                 .name(sex == Sex.MAN ? generateBoyName() : generateGirlName())
                 .sex(sex)
                 .age(age)
-                .morality(generateMorality())
+                .morality(generateMorality(moralitySystem))
                 .education(generateEducation(educationSystem))
-                .power(0)
                 .happiness(generateHappiness())
+                .power(0)
                 .build();
     }
 
@@ -228,8 +298,8 @@ public class PopulationRepository {
         return countriesDB.get(random.nextInt(countriesDB.size()));
     }
 
-    private int generateMorality() {
-        return random.nextInt(2 * MAX_MORALITY) - MAX_MORALITY;
+    private int generateMorality(MoralitySystem moralitySystem) {
+        return random.nextInt(moralitySystem.getMaxLevel() - moralitySystem.getMinLevel()) + moralitySystem.getMinLevel();
     }
 
     private int generateEducation(EducationSystem educationSystem) {

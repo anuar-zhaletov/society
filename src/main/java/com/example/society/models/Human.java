@@ -17,6 +17,6 @@ public class Human {
     private Sex sex;
     private long morality;
     private long education;
-    private long power;
     private long happiness;
+    private long power;
 }
