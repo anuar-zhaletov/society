@@ -5,15 +5,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public enum SexEnum {
+public enum Sex {
     MAN, WOMAN;
 
-    private static final List<SexEnum> VALUES =
+    private static final List<Sex> VALUES =
             Collections.unmodifiableList(Arrays.asList(values()));
     private static final int SIZE = VALUES.size();
     private static final Random RANDOM = new Random();
 
-    public static SexEnum getAny()  {
+    public static Sex getAny()  {
         return VALUES.get(RANDOM.nextInt(SIZE));
     }
 }

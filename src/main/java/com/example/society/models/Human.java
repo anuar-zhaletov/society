@@ -1,6 +1,6 @@
 package com.example.society.models;
 
-import com.example.society.enums.SexEnum;
+import com.example.society.enums.Sex;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,12 +11,12 @@ import lombok.Setter;
 @Builder
 @EqualsAndHashCode
 public class Human {
+    private long id;
     private String name;
-    private int age;
-    private SexEnum sex;
-    private String country;
-    private int morality;
-    private int education;
-    private int power;
-    private int happiness;
+    private long age;
+    private Sex sex;
+    private long morality;
+    private long education;
+    private long power;
+    private long happiness;
 }

@@ -7,23 +7,17 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
 @EqualsAndHashCode
-public class Demographic {
-    private long totalPopulation;
-    private long manPercentage;
-    private long womanPercentage;
-    private long numberOfChildren;
-    private long numberOfAdult;
-    private long happinessPercentage;
+public class Population {
+    private List<Human> humanity;
     private PoliticalSystem politicalSystem;
+    private EducationSystem educationSystem;
     private long born;
     private long died;
     private long killed;
-    private long educationLevelPercentage;
-    private EducationSystem educationSystem;
-    private long moralityPercentage;
-    private long totalPower;
 }
