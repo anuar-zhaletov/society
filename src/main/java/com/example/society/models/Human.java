@@ -1,5 +1,6 @@
 package com.example.society.models;
 
+import com.example.society.enums.Personality;
 import com.example.society.enums.Sex;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -19,4 +20,5 @@ public class Human {
     private long education;
     private long happiness;
     private long power;
+    private Personality personality;
 }
