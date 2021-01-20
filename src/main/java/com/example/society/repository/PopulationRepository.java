@@ -39,12 +39,12 @@ public class PopulationRepository {
     private final PowerDistributionService powerDistributionService;
 
     public synchronized void produceInitialHumanity() {
-        IntStream.range(1, 100000 + 1).forEach(i -> putHumanIntoPopulationDB(generateCountry(), generateInitialHuman()));
+        IntStream.range(1, 2000 + 1).forEach(i -> putHumanIntoPopulationDB(generateCountry(), generateInitialHuman()));
     }
 
     public synchronized void produceChildren() {
         populationDB.forEach((country, population) -> {
-            long numberOfChildrenBorn = population.getHumanity().size() / 25;
+            long numberOfChildrenBorn = population.getHumanity().size() / 70;
             LongStream.range(1, numberOfChildrenBorn + 1).forEach(i -> {
                 putHumanIntoPopulationDB(country, generateChild(population.getEducationSystem(), population.getMoralitySystem()));
                 population.setBorn(population.getBorn() + 1);
@@ -180,6 +180,16 @@ public class PopulationRepository {
             population.setMoralitySystem(moralitySystem);
             population.getHumanity().forEach(human -> human.setMorality(generateMorality(moralitySystem)));
         }
+    }
+
+    public synchronized List<Human> getHumanity() {
+        return populationDB.get("Austria").getHumanity();
+    }
+
+    public synchronized Human findHumanById(Long id) {
+        return populationDB.get("Austria").getHumanity()
+                .stream().filter(human -> human.getId() == id)
+                .findFirst().orElse(null);
     }
 
     private long getTotalPower(Human human) {

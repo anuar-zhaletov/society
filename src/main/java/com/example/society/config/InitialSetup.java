@@ -18,15 +18,15 @@ public class InitialSetup {
         populationRepository.produceInitialHumanity();
     }
 
-    @Scheduled(fixedRate = 5*1000)
-    public void populationLifecycle() {
-        populationRepository.makeHumanityOlderBy1Year();
-        populationRepository.produceChildren();
-        populationRepository.distributePower();
-    }
+//    @Scheduled(fixedRate = 5*1000)
+//    public void populationLifecycle() {
+//        populationRepository.makeHumanityOlderBy1Year();
+//        populationRepository.produceChildren();
+//        populationRepository.distributePower();
+//    }
 
-    @Scheduled(fixedRate = 1000)
-    public void changeHappiness() {
-        populationRepository.changeHappiness();
-    }
+//    @Scheduled(fixedRate = 1000)
+//    public void changeHappiness() {
+//        populationRepository.changeHappiness();
+//    }
 }

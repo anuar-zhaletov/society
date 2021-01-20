@@ -3,6 +3,7 @@ package com.example.society.controllers;
 import com.example.society.enums.EducationSystem;
 import com.example.society.enums.MoralitySystem;
 import com.example.society.models.Demographic;
+import com.example.society.models.Human;
 import com.example.society.repository.PopulationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,5 +47,15 @@ public class HumanController {
     @GetMapping("moralitySystems")
     public MoralitySystem[] getMoralitySystems() {
         return MoralitySystem.values();
+    }
+
+    @GetMapping("humanity")
+    public List<Human> humanity() {
+        return populationRepository.getHumanity();
+    }
+
+    @GetMapping("human/{id}")
+    public Human human(@PathVariable Long id) {
+        return populationRepository.findHumanById(id);
     }
 }
