@@ -13,11 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class InitialSetup {
     private final PopulationRepository populationRepository;
 
-    @Bean
-    public void populateWithInitialHumanity() {
-        populationRepository.produceInitialHumanity();
-    }
-
 //    @Scheduled(fixedRate = 5*1000)
 //    public void populationLifecycle() {
 //        populationRepository.makeHumanityOlderBy1Year();

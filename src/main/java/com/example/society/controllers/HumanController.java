@@ -17,26 +17,20 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HumanController {
     private final PopulationRepository populationRepository;
-    private final List<String> countriesDB;
 
     @GetMapping("getDemographicStatistic")
-    public Map<String, Demographic> getDemographicStatistic() {
+    public Demographic getDemographicStatistic() {
         return populationRepository.getDemographicStatistic();
     }
 
-    @GetMapping("changeEducationSystem/{country}/{educationSystem}")
-    public void changeEducationSystem(@PathVariable String country, @PathVariable EducationSystem educationSystem) {
-        populationRepository.changeEducationSystem(country, educationSystem);
+    @GetMapping("changeEducationSystem/{educationSystem}")
+    public void changeEducationSystem(@PathVariable EducationSystem educationSystem) {
+        populationRepository.changeEducationSystem(educationSystem);
     }
 
-    @GetMapping("changeMoralitySystem/{country}/{moralitySystem}")
-    public void changeMoralitySystem(@PathVariable String country, @PathVariable MoralitySystem moralitySystem) {
-        populationRepository.changeMoralitySystem(country, moralitySystem);
-    }
-
-    @GetMapping("countries")
-    public List<String> getCountries() {
-        return countriesDB;
+    @GetMapping("changeMoralitySystem/{moralitySystem}")
+    public void changeMoralitySystem(@PathVariable MoralitySystem moralitySystem) {
+        populationRepository.changeMoralitySystem(moralitySystem);
     }
 
     @GetMapping("educationSystems")

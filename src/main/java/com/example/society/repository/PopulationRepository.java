@@ -8,7 +8,6 @@ import com.example.society.enums.Sex;
 import com.example.society.models.Demographic;
 import com.example.society.models.Human;
 import com.example.society.models.Population;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 @Repository
-@RequiredArgsConstructor
 public class PopulationRepository {
     private static final int ADULT_AGE = 18;
     private static final AtomicLong HUMAN_ID = new AtomicLong(0);
@@ -33,161 +31,134 @@ public class PopulationRepository {
     private final Random random;
     private final List<String> boyNamesDB;
     private final List<String> girlNamesDB;
-    private final List<String> countriesDB;
-
-    private final Map<String, Population> populationDB;
     private final PowerDistributionService powerDistributionService;
+    private final Population population;
 
-    public synchronized void produceInitialHumanity() {
-        IntStream.range(1, 2000 + 1).forEach(i -> putHumanIntoPopulationDB(generateCountry(), generateInitialHuman()));
+    public PopulationRepository(Random random, List<String> boyNamesDB, List<String> girlNamesDB, PowerDistributionService powerDistributionService) {
+        this.random = random;
+        this.boyNamesDB = boyNamesDB;
+        this.girlNamesDB = girlNamesDB;
+        this.powerDistributionService = powerDistributionService;
+        this.population = Population.builder()
+                .humanity(IntStream.range(1, 2000 + 1).boxed().map(i -> generateInitialHuman()).collect(Collectors.toList()))
+                .educationSystem(EducationSystem.getAny())
+                .moralitySystem(MoralitySystem.getAny())
+                .born(0L)
+                .died(0L)
+                .killed(0L)
+                .build();
     }
 
     public synchronized void produceChildren() {
-        populationDB.forEach((country, population) -> {
-            long numberOfChildrenBorn = population.getHumanity().size() / 70;
-            LongStream.range(1, numberOfChildrenBorn + 1).forEach(i -> {
-                putHumanIntoPopulationDB(country, generateChild(population.getEducationSystem(), population.getMoralitySystem()));
-                population.setBorn(population.getBorn() + 1);
-            });
+        long numberOfChildrenBorn = population.getHumanity().size() / 70;
+        LongStream.range(1, numberOfChildrenBorn + 1).forEach(i -> {
+            population.getHumanity().add(generateChild(population.getEducationSystem(), population.getMoralitySystem()));
+            population.setBorn(population.getBorn() + 1);
         });
     }
 
     public synchronized void makeHumanityOlderBy1Year() {
-        populationDB.forEach((country, population) -> {
-            List<Human> humanity = population.getHumanity();
-            Set<Human> humanityToRemove = new HashSet<>();
-            for (Human human : humanity) {
-                if (human.getAge() == MAX_AGE) {
-                    humanityToRemove.add(human);
-                } else {
-                    human.setAge(human.getAge() + 1);
-                }
+        List<Human> humanity = population.getHumanity();
+        Set<Human> humanityToRemove = new HashSet<>();
+        for (Human human : humanity) {
+            if (human.getAge() == MAX_AGE) {
+                humanityToRemove.add(human);
+            } else {
+                human.setAge(human.getAge() + 1);
             }
+        }
 
-            humanity.removeAll(humanityToRemove);
-            population.setDied(population.getDied() + humanityToRemove.size());
-        });
+        humanity.removeAll(humanityToRemove);
+        population.setDied(population.getDied() + humanityToRemove.size());
     }
 
     public synchronized void distributePower() {
-        populationDB.forEach((country, population) -> powerDistributionService.distributePower(population));
+        powerDistributionService.distributePower(population);
     }
 
-    public synchronized Map<String, Demographic> getDemographicStatistic() {
-        return populationDB.entrySet().stream().collect(Collectors.toMap(
-                Map.Entry::getKey,
-                e -> {
-                    List<Human> humanity = e.getValue().getHumanity();
-                    long totalPopulation = humanity.size();
-                    long numberOfMan = humanity.stream().filter(human -> human.getSex() == Sex.MAN).count();
-                    long numberOfWoman = humanity.stream().filter(human -> human.getSex() == Sex.WOMAN).count();
-                    long manPercentage = (long) ((double) numberOfMan / totalPopulation * 100);
-                    long womanPercentage = (long) ((double) numberOfWoman / totalPopulation * 100);
-                    long numberOfChildren = humanity.stream().filter(human -> human.getAge() < ADULT_AGE).count();
-                    long numberOfAdult = totalPopulation - numberOfChildren;
-                    long happinessPercentage = (long) ((double) humanity.stream().map(Human::getHappiness).reduce(0L, Long::sum) / (totalPopulation * MAX_HAPPINESS) * 100);
-                    long educationLevelPercentage = (long) ((double) humanity.stream().map(Human::getEducation).reduce(0L, Long::sum) / (totalPopulation * EducationSystem.LEVEL_5.getMaxLevel()) * 100);
-                    long moralityPercentage = (long) ((double) humanity.stream().map(Human::getMorality).reduce(0L, Long::sum) / (totalPopulation * MoralitySystem.LEVEL_5.getMaxLevel()) * 100);
-                    long totalPower = humanity.stream().map(this::getTotalPower).reduce(0L, Long::sum);
+    public synchronized Demographic getDemographicStatistic() {
+        List<Human> humanity = population.getHumanity();
+        long totalPopulation = humanity.size();
+        long numberOfMan = humanity.stream().filter(human -> human.getSex() == Sex.MAN).count();
+        long numberOfWoman = humanity.stream().filter(human -> human.getSex() == Sex.WOMAN).count();
+        long manPercentage = (long) ((double) numberOfMan / totalPopulation * 100);
+        long womanPercentage = (long) ((double) numberOfWoman / totalPopulation * 100);
+        long numberOfChildren = humanity.stream().filter(human -> human.getAge() < ADULT_AGE).count();
+        long numberOfAdult = totalPopulation - numberOfChildren;
+        long happinessPercentage = (long) ((double) humanity.stream().map(Human::getHappiness).reduce(0L, Long::sum) / (totalPopulation * MAX_HAPPINESS) * 100);
+        long educationLevelPercentage = (long) ((double) humanity.stream().map(Human::getEducation).reduce(0L, Long::sum) / (totalPopulation * EducationSystem.LEVEL_5.getMaxLevel()) * 100);
+        long moralityPercentage = (long) ((double) humanity.stream().map(Human::getMorality).reduce(0L, Long::sum) / (totalPopulation * MoralitySystem.LEVEL_5.getMaxLevel()) * 100);
+        long totalPower = humanity.stream().map(this::getTotalPower).reduce(0L, Long::sum);
 
-                    return Demographic.builder()
-                            .totalPopulation(totalPopulation)
-                            .manPercentage(manPercentage)
-                            .womanPercentage(womanPercentage)
-                            .numberOfChildren(numberOfChildren)
-                            .numberOfAdult(numberOfAdult)
-                            .happinessPercentage(happinessPercentage)
-                            .born(e.getValue().getBorn())
-                            .died(e.getValue().getDied())
-                            .killed(e.getValue().getKilled())
-                            .educationLevelPercentage(educationLevelPercentage)
-                            .educationSystem(e.getValue().getEducationSystem())
-                            .moralitySystem(e.getValue().getMoralitySystem())
-                            .moralityPercentage(moralityPercentage)
-                            .totalPower(totalPower)
-                            .build();
-                }));
-    }
-
-    private void putHumanIntoPopulationDB(String country, Human human) {
-        if (populationDB.containsKey(country)) {
-            populationDB.get(country).getHumanity().add(human);
-        } else {
-            List<Human> humanity = new ArrayList<>();
-            humanity.add(human);
-            populationDB.put(country, Population.builder()
-                    .humanity(humanity)
-                    .educationSystem(EducationSystem.getAny())
-                    .moralitySystem(MoralitySystem.getAny())
-                    .born(0L)
-                    .died(0L)
-                    .killed(0L)
-                    .build()
-            );
-        }
+        return Demographic.builder()
+                .totalPopulation(totalPopulation)
+                .manPercentage(manPercentage)
+                .womanPercentage(womanPercentage)
+                .numberOfChildren(numberOfChildren)
+                .numberOfAdult(numberOfAdult)
+                .happinessPercentage(happinessPercentage)
+                .born(population.getBorn())
+                .died(population.getDied())
+                .killed(population.getKilled())
+                .educationLevelPercentage(educationLevelPercentage)
+                .educationSystem(population.getEducationSystem())
+                .moralitySystem(population.getMoralitySystem())
+                .moralityPercentage(moralityPercentage)
+                .totalPower(totalPower)
+                .build();
     }
 
     public synchronized void changeHappiness() {
-        populationDB.forEach((country, population) -> {
-            long positiveHappiness = 0L;
-            long negativeHappiness = 0L;
-            List<Human> humanity = population.getHumanity();
-            for (Human human : humanity) {
-                if (human.getMorality() > 0L) {
-                    positiveHappiness += getTotalPower(human);
-                } else {
-                    negativeHappiness -= getTotalPower(human);
-                }
+        long positiveHappiness = 0L;
+        long negativeHappiness = 0L;
+        List<Human> humanity = population.getHumanity();
+        for (Human human : humanity) {
+            if (human.getMorality() > 0L) {
+                positiveHappiness += getTotalPower(human);
+            } else {
+                negativeHappiness -= getTotalPower(human);
             }
+        }
 
-            while (!humanity.isEmpty() && positiveHappiness > 0L) {
-                Human randomHuman = humanity.get(random.nextInt(humanity.size()));
-                if (randomHuman.getHappiness() < 10L) {
-                    randomHuman.setHappiness(randomHuman.getHappiness() + 1);
-                } else if (negativeHappiness > 0L) {
-                    negativeHappiness--;
-                }
-
-                positiveHappiness--;
-            }
-
-            while (!humanity.isEmpty() && negativeHappiness > 0L) {
-                Human randomHuman = humanity.get(random.nextInt(humanity.size()));
-                if (randomHuman.getHappiness() <= 1L) {
-                    humanity.remove(randomHuman);
-                    population.setKilled(population.getKilled() + 1);
-                } else {
-                    randomHuman.setHappiness(randomHuman.getHappiness() - 1);
-                }
+        while (!humanity.isEmpty() && positiveHappiness > 0L) {
+            Human randomHuman = humanity.get(random.nextInt(humanity.size()));
+            if (randomHuman.getHappiness() < 10L) {
+                randomHuman.setHappiness(randomHuman.getHappiness() + 1);
+            } else if (negativeHappiness > 0L) {
                 negativeHappiness--;
             }
-        });
-    }
 
-    public synchronized void changeEducationSystem(String country, EducationSystem educationSystem) {
-        Population population = populationDB.get(country);
+            positiveHappiness--;
+        }
 
-        if (population != null) {
-            population.setEducationSystem(educationSystem);
-            population.getHumanity().forEach(human -> human.setEducation(generateEducation(educationSystem)));
+        while (!humanity.isEmpty() && negativeHappiness > 0L) {
+            Human randomHuman = humanity.get(random.nextInt(humanity.size()));
+            if (randomHuman.getHappiness() <= 1L) {
+                humanity.remove(randomHuman);
+                population.setKilled(population.getKilled() + 1);
+            } else {
+                randomHuman.setHappiness(randomHuman.getHappiness() - 1);
+            }
+            negativeHappiness--;
         }
     }
 
-    public synchronized void changeMoralitySystem(String country, MoralitySystem moralitySystem) {
-        Population population = populationDB.get(country);
+    public synchronized void changeEducationSystem(EducationSystem educationSystem) {
+        population.setEducationSystem(educationSystem);
+        population.getHumanity().forEach(human -> human.setEducation(generateEducation(educationSystem)));
+    }
 
-        if (population != null) {
-            population.setMoralitySystem(moralitySystem);
-            population.getHumanity().forEach(human -> human.setMorality(generateMorality(moralitySystem)));
-        }
+    public synchronized void changeMoralitySystem(MoralitySystem moralitySystem) {
+        population.setMoralitySystem(moralitySystem);
+        population.getHumanity().forEach(human -> human.setMorality(generateMorality(moralitySystem)));
     }
 
     public synchronized List<Human> getHumanity() {
-        return populationDB.get("Austria").getHumanity();
+        return population.getHumanity();
     }
 
     public synchronized Human findHumanById(Long id) {
-        return populationDB.get("Austria").getHumanity()
+        return population.getHumanity()
                 .stream().filter(human -> human.getId() == id)
                 .findFirst().orElse(null);
     }
@@ -234,10 +205,6 @@ public class PopulationRepository {
 
     private String generateGirlName() {
         return girlNamesDB.get(random.nextInt(girlNamesDB.size()));
-    }
-
-    private String generateCountry() {
-        return countriesDB.get(random.nextInt(countriesDB.size()));
     }
 
     private int generateMorality(MoralitySystem moralitySystem) {
